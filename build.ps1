@@ -26,7 +26,10 @@ if ($Package) {
     Copy-Item (Join-Path $root 'README.md'), (Join-Path $root 'LICENSE'), (Join-Path $root 'COMMERCIAL-LICENSE.md') $out
     New-Item -ItemType Directory -Path (Join-Path $out 'mcp') -Force | Out-Null
     Copy-Item (Join-Path $root 'mcp\server.py'), (Join-Path $root 'mcp\requirements.txt') (Join-Path $out 'mcp')
+    New-Item -ItemType Directory -Path (Join-Path $out 'docs'), (Join-Path $out 'tools') -Force | Out-Null
+    Copy-Item (Join-Path $root 'docs\*.md') (Join-Path $out 'docs')
+    Copy-Item (Join-Path $root 'tools\Measure-Idle.ps1') (Join-Path $out 'tools')
     $zip = Join-Path $root "artifacts\desktop-rescue-win-$Architecture.zip"
-    Compress-Archive -Path (Join-Path $out 'desktop-rescue.exe'), (Join-Path $out '*.md'), (Join-Path $out 'LICENSE'), (Join-Path $out 'mcp') -DestinationPath $zip -Force
+    Compress-Archive -Path (Join-Path $out 'desktop-rescue.exe'), (Join-Path $out '*.md'), (Join-Path $out 'LICENSE'), (Join-Path $out 'mcp'), (Join-Path $out 'docs'), (Join-Path $out 'tools') -DestinationPath $zip -Force
     Get-FileHash $zip -Algorithm SHA256 | Format-List Algorithm,Hash,Path
 }

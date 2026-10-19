@@ -3,8 +3,22 @@
 #include <string_view>
 
 namespace rescue {
-inline bool IsRecoveryKey(unsigned key, unsigned flags, bool keyDown) {
-    return keyDown && !(flags & 0x12) && (key == 0x1B || key == 0x24);
+inline bool IsRecoveryKey(unsigned key, unsigned flags, bool keyDown, unsigned modifiers = 0) {
+    return keyDown && !modifiers && !(flags & 0x32) && (key == 0x1B || key == 0x24);
+}
+
+inline unsigned ModifierBit(unsigned key) {
+    switch (key) {
+    case 0x10: case 0xA0: return 1;
+    case 0xA1: return 2;
+    case 0x11: case 0xA2: return 4;
+    case 0xA3: return 8;
+    case 0x12: case 0xA4: return 16;
+    case 0xA5: return 32;
+    case 0x5B: return 64;
+    case 0x5C: return 128;
+    default: return 0;
+    }
 }
 
 inline bool IsSecureDesktop(std::wstring_view name) {

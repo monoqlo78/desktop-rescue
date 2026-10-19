@@ -272,12 +272,26 @@ class DesktopHook {
     std::atomic<DWORD> error_{0};
     std::atomic<bool> active_{false};
     DWORD id_ = 0;
+    unsigned modifiers_ = 0;
     static thread_local DesktopHook* current_;
+    static unsigned AsyncModifiers() {
+        unsigned mask = 0;
+        for (int key : {VK_LSHIFT, VK_RSHIFT, VK_LCONTROL, VK_RCONTROL, VK_LMENU, VK_RMENU, VK_LWIN, VK_RWIN})
+            if (GetAsyncKeyState(key) & 0x8000) mask |= rescue::ModifierBit(key);
+        return mask;
+    }
     static LRESULT CALLBACK Keyboard(int code, WPARAM message, LPARAM data) {
         if (code == HC_ACTION && current_) {
             const auto* key = reinterpret_cast<const KBDLLHOOKSTRUCT*>(data);
-            if (rescue::IsRecoveryKey(key->vkCode, key->flags,
-                    message == WM_KEYDOWN || message == WM_SYSKEYDOWN)) {
+            const auto bit = rescue::ModifierBit(key->vkCode);
+            const bool down = message == WM_KEYDOWN || message == WM_SYSKEYDOWN;
+            if (bit) {
+                if (down) current_->modifiers_ |= bit;
+                else current_->modifiers_ &= ~bit;
+            }
+            if ((key->vkCode == VK_HOME || key->vkCode == VK_ESCAPE) &&
+                rescue::IsRecoveryKey(key->vkCode, key->flags,
+                    down, current_->modifiers_ | AsyncModifiers())) {
                 current_->requested_.store(current_->generation_);
                 if (!SetEvent(current_->recoveryEvent_))
                     current_->error_ = GetLastError();
@@ -296,6 +310,7 @@ class DesktopHook {
         }
         MSG message{};
         PeekMessageW(&message, nullptr, 0, 0, PM_NOREMOVE);
+        modifiers_ = AsyncModifiers();
         const auto hook = SetWindowsHookExW(WH_KEYBOARD_LL, Keyboard, GetModuleHandleW(nullptr), 0);
         if (!hook) {
             error_ = GetLastError();
@@ -644,6 +659,10 @@ int SelfTest() {
     check(!rescue::IsRecoveryKey(VK_HOME, LLKHF_LOWER_IL_INJECTED, true), "ignore lower-integrity injected");
     check(!rescue::IsRecoveryKey(VK_HOME, 0, false), "ignore key-up");
     check(!rescue::IsRecoveryKey('A', 0, true), "ignore normal keys");
+    check(!rescue::IsRecoveryKey(VK_HOME, 0, true, rescue::ModifierBit(VK_LWIN)), "ignore Win+Home");
+    check(!rescue::IsRecoveryKey(VK_ESCAPE, 0, true, rescue::ModifierBit(VK_LCONTROL)), "ignore Ctrl+Esc");
+    check(!rescue::IsRecoveryKey(VK_HOME, LLKHF_ALTDOWN, true), "ignore Alt-modified key");
+    check(rescue::ModifierBit(VK_LSHIFT) != rescue::ModifierBit(VK_RSHIFT), "track both modifier sides");
     check(rescue::JsonEscape("\"\\\n\x01") == "\\\"\\\\\\n\\u0001", "JSON escaping");
     struct Fake {
         std::vector<rescue::InputDesktop> inputs;
