@@ -40,7 +40,8 @@ while ($true) {
         handles = $process.HandleCount
     })
     if ($timer.Elapsed.TotalSeconds -ge $Seconds) { break }
-    Start-Sleep -Milliseconds ([int](1000 * [Math]::Min($IntervalSeconds, $Seconds - $timer.Elapsed.TotalSeconds)))
+    $remainingMilliseconds = 1000 * [Math]::Min([double]$IntervalSeconds, $Seconds - $timer.Elapsed.TotalSeconds)
+    Start-Sleep -Milliseconds ([Math]::Max(1, [int][Math]::Ceiling($remainingMilliseconds)))
 }
 $elapsed = $timer.Elapsed.TotalSeconds
 $cpuEnd = $process.TotalProcessorTime.TotalSeconds

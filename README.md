@@ -20,7 +20,7 @@
 
 [GitHub Releases](https://github.com/monoqlo78/desktop-rescue/releases) の `desktop-rescue-win-x64.zip`、Windows on ARMでは `desktop-rescue-win-arm64.zip` を展開します。レビュー前の配布物はActionsのビルド成果物（公開Release前）としても提供します。ソースの公開・ZIPのダウンロードはPCへのインストールや自動起動登録を意味しません。
 
-通常画面が表示されている間に、展開先から実行してください。管理者権限は不要です。
+通常画面が表示されている間に、展開先から実行してください。管理者権限は不要です。実行ファイルはコード署名されておらず、本ツールがOSの安全警告を解除・迂回することはありません。
 
 ```powershell
 .\desktop-rescue.exe start
@@ -74,7 +74,7 @@ MCPツールは `start / status / recover / stop` のみです。自動起動登
 
 ## ビルド・安全なテスト・配布
 
-Visual Studio 2022以降のC++ Build ToolsとWindows SDK、PowerShellが必要です。常駐本体は外部パッケージ不要、静的CRTリンクの単一exeです。
+ソースからのビルドにはVisual Studio 2022以降のC++ Build ToolsとWindows SDK、PowerShellが必要です。以下はソースを取得したディレクトリで実行します。常駐本体は外部パッケージ不要、静的CRTリンクの単一exeです。
 
 ```powershell
 .\build.ps1 -Package
